@@ -1,7 +1,15 @@
-# python -m  pip install langchain-text-splitters
-all: run
+VENV = .venv
+PYTHON = $(VENV)/bin/python
+PIP = $(VENV)/bin/pip
+
+.PHONY: all install clean run debug lint lint-strict fclean re
+
+all: install
 
 install:
+	python3 -m venv $(VENV)
+	$(PIP) install --upgrade pip
+	$(PIP) install langchain-text-splitters vllm
 	uv sync
 	uv add --dev flake8 mypy
 
@@ -13,11 +21,11 @@ debug:
 	uv run python -m pdb -m src $(ARGS)
 
 lint:
-	uv run flake8 --exclude .venv .
+	uv run flake8 --exclude $(VENV) .
 	uv run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
-	uv run flake8 --exclude .venv .
+	uv run flake8 --exclude $(VENV) .
 	uv run mypy . --strict
 
 clean:
@@ -25,6 +33,6 @@ clean:
 	rm -rf .mypy_cache .pytest_cache
 
 fclean: clean
-	rm -rf .venv uv.lock .hf_cache
+	rm -rf $(VENV) uv.lock .hf_cache
 
 re: fclean install
