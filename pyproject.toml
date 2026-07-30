@@ -1,0 +1,44 @@
+[project]
+name = "rag"
+version = "1.0.0"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.0",
+    "pydantic>=2.0.0",
+    "torch>=2.0.0",
+    "transformers>=4.40.0",
+    "huggingface-hub>=0.20.0",
+    "accelerate>=1.14.0",
+    # Adicionadas para o RAG e Chroma:
+    "langchain-chroma>=0.1.0",
+    "langchain-community>=0.2.0",
+    "langchain-core>=0.2.0",
+    "langchain-openai>=0.1.0",
+    "langchain-text-splitters>=0.2.0",
+]
+
+[project.scripts]
+src = "src.__main__:main"
+
+[tool.mypy]
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = false
+disallow_untyped_defs = true
+check_untyped_defs = true
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+
+[dependency-groups]
+dev = [
+    "flake8>=7.3.0",
+    "langchain-chroma>=1.1.0",
+    "langchain-community>=0.4.2",
+    "langchain-core>=1.5.3",
+    "langchain-openai>=1.4.1",
+    "langchain-text-splitters>=1.1.2",
+    "mypy>=2.3.0",
+]

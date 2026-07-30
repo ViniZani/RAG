@@ -2,24 +2,25 @@ VENV = .venv
 PYTHON = $(VENV)/bin/python
 PIP = $(VENV)/bin/pip
 
+# Define o cache do UV dinamicamente na pasta sgoinfre do projeto
+export UV_CACHE_DIR = $(CURDIR)/.cache/uv
+
 .PHONY: all install clean run debug lint lint-strict fclean re
 
 all: install
 
 install:
-	python3 -m venv $(VENV)
-	$(PIP) install --upgrade pip
-	$(PIP) install langchain-text-splitters vllm
-	$(PIP) install langchain-chroma langchain-openai
+	# Deixa o UV gerenciar a criação da venv e a sincronização das dependências de forma limpa
+	uv venv $(VENV)
+	uv pip install --upgrade pip
 	uv sync
-	uv add --dev flake8 mypy
+	uv add --dev flake8 mypy langchain-chroma langchain-text-splitters langchain_community langchain_openai langchain_core
 
 run:
-	python -m src $(ARGS)
-	uv run python -m src $(ARGS)
+	$(PYTHON) -m src $(ARGS)
 
 debug:
-	uv run python -m pdb -m src $(ARGS)
+	$(PYTHON) -m pdb -m src $(ARGS)
 
 lint:
 	uv run flake8 --exclude $(VENV) .
@@ -34,6 +35,6 @@ clean:
 	rm -rf .mypy_cache .pytest_cache
 
 fclean: clean
-	rm -rf $(VENV) uv.lock .hf_cache
+	rm -rf $(VENV) uv.lock .hf_cache .cache
 
 re: fclean install

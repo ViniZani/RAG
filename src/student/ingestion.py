@@ -5,19 +5,6 @@ from langchain_core.documents import Document
 import re
 
 
-def scraper_repo() -> list[Path]:
-    py_files = []
-    # path = "data/raw/vllm-0.10.1/"    # Padrão
-    path = Path("data_test")            # Para testar a função
-    for file in path.rglob("*.py"):
-        py_files.append(file)
-
-    md_files = []
-    for file in path.rglob("*.md"):
-        md_files.append(file)
-    return md_files
-
-
 def chunk_python_code(text: str, max_chunk_size: int) -> list[Document]:
     if max_chunk_size <= 0:
         raise ValueError("max_chunk_size must be a positive integer")
@@ -41,8 +28,9 @@ def chunk_python_code(text: str, max_chunk_size: int) -> list[Document]:
 
 
 def chunk_text(text: str, max_chunk_size: int = 2000) -> list[Document]:
-    """Splits a Markdown file by sections, protecting code blocks,
-    and indexes each chunk with its correct start_index in the original text."""
+    """Splits a Markdown file by sections, protecting code blocks, and
+    indexes each chunk with its correct start_index in the original text."""
+
     if max_chunk_size <= 0:
         raise ValueError("max_chunk_size must be a positive integer")
     if max_chunk_size > 2000:
@@ -101,21 +89,21 @@ def chunk_text(text: str, max_chunk_size: int = 2000) -> list[Document]:
         for doc in raw_documents:
             content = doc.page_content
             # O start_index retornado pelo splitter é relativo à *seção*
-            splitter_start_index_in_section = doc.metadata.get("start_index", 0)
+            splitter_start_index_in_sec = doc.metadata.get("start_index", 0)
 
-            # Posição absoluta do início do chunk no texto processado (com placeholders)
-            absolute_splitter_index = section_start + splitter_start_index_in_section
+# Posição absoluta do início do chunk no texto processado (com placeholders)
+            absol_splitter_index = section_start + splitter_start_index_in_sec
 
-            # 4. Calcular o delta acumulado considerando os blocos anteriores a esta posição absoluta
+# 4. Calcular o delta acumulado considerando os blocos anteriores a esta posição absoluta
             delta_acumulado = 0
             for block in code_blocks:
-                if block["start"] < (absolute_splitter_index + delta_acumulado):
+                if block["start"] < (absol_splitter_index + delta_acumulado):
                     delta_acumulado += block["len_diff"]
 
             # O start_index real no texto original completo
-            real_start_index = absolute_splitter_index + delta_acumulado
+            real_start_index = absol_splitter_index + delta_acumulado
 
-            # 5. Restaurar os placeholders de volta para os blocos de código originais
+# 5. Restaurar os placeholders de volta para os blocos de código originais
             for block in code_blocks:
                 if block["placeholder"] in content:
                     content = content.replace(block["placeholder"], block["original"])
@@ -128,9 +116,36 @@ def chunk_text(text: str, max_chunk_size: int = 2000) -> list[Document]:
     return final_documents
 
 
+def ingest_repo(repo_path: Path, max_chunk_size: int) -> list[dict]:
+    """Screapes the llm's repo, and search by .py and .md files
+    parser each type of file and returns in a organized data"""
+    all_chunks: list[dict] = []
+
+    for py_file in repo_path.rglob("*.py"):
+        content = py_file.read_text(encoding="utf-8")
+        for doc in chunk_python_code(content, max_chunk_size):
+            all_chunks.append({
+                "text": doc.page_content,
+                "file_path": str(py_file),
+                "first_character_index": doc.metadata["start_index"],
+                "last_character_index": (doc.metadata["start_index"]
+                                         + len(doc.page_content)),
+                "chunk_type": "code",
+            })
+
+    for md_file in repo_path.rglob("*.md"):
+        content = md_file.read_text(encoding="utf-8")
+        for doc in chunk_text(content, max_chunk_size):
+            all_chunks.append({
+                "text": doc.page_content,
+                "file_path": str(md_file),
+                "first_character_index": doc.metadata["start_index"],
+                "last_character_index": (doc.metadata["start_index"]
+                                         + len(doc.page_content)),
+                "chunk_type": "docs",
+            })
+    return all_chunks
+
+
 if __name__ == "__main__":
-    md_file = scraper_repo()
-    with open(md_file[0]) as archive:
-        content = archive.read()
-    chunk = chunk_text(content)
-    print(chunk)
+    print(ingest_repo(Path("data_test"), 200))
