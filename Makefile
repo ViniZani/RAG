@@ -10,12 +10,13 @@ install:
 	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip
 	$(PIP) install langchain-text-splitters vllm
+	$(PIP) install langchain-chroma langchain-openai
 	uv sync
 	uv add --dev flake8 mypy
 
 run:
 	python -m src $(ARGS)
-	# uv run python -m src $(ARGS)
+	uv run python -m src $(ARGS)
 
 debug:
 	uv run python -m pdb -m src $(ARGS)
