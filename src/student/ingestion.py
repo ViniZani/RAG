@@ -116,7 +116,7 @@ def chunk_text(text: str, max_chunk_size: int = 2000) -> list[Document]:
     return final_documents
 
 
-def ingest_repo(repo_path: Path, max_chunk_size: int) -> list[dict]:
+def ingest_repo(repo_path: str, max_chunk_size: int) -> list[dict]:
     """Screapes the llm's repo, and search by .py and .md files
     parser each type of file and returns in a organized data"""
     all_chunks: list[dict] = []
