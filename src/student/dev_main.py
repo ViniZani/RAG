@@ -1,7 +1,8 @@
 from pathlib import Path
 
 from src.student.ingestion import ingest_repo
-from src.student.index import build_index
+from src.student.index import build_index, load_index
+from src.student.retrivial import search
 
 
 def main() -> None:
@@ -29,6 +30,12 @@ def main() -> None:
 
     build_index(code_chunks, Path("data/processed/bm25_index_code"))
     build_index(docs_chunks, Path("data/processed/bm25_index_docs"))
+
+    retriever = load_index(Path("data/processed/bm25_index_code"))
+    results = search("soma", retriever, k=2)
+
+    for r in results:
+        print(r["file_path"], "->", r["text"][:60])
 
 
 if __name__ == "__main__":
