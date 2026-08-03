@@ -37,7 +37,7 @@ def search(query: str, retriever: bm25s.BM25, k: int) -> list[dict]:
     return top_chunks
 
 
-def search_dataset(dataset_path: str, k: int, save_directory: str,
+def search_dataset(dataset_path: Path, k: int, save_directory: str,
                    index_type: str) -> None:
     """Runs search() for every question in a dataset and saves the results.
         dataset_path: Path to the input RagDataset JSON file.
@@ -47,15 +47,15 @@ def search_dataset(dataset_path: str, k: int, save_directory: str,
     # 1. Carrega o índice certo, com base em index_type
     #    (dica: você já tem load_index(save_dir: Path) -> bm25s.BM25 pronto;
     #    o caminho segue o padrão "data/processed/bm25_index_{index_type}")
-    retriever = ...
+    retriever = load_index(Path(f"data/processed/bm25_index_{index_type}"))
 
     # 2. Carrega e valida o dataset de entrada contra RagDataset
     #    (dica: leia o JSON com json.load, depois RagDataset(**dados)
     #    -- ou explore RagDataset.model_validate_json diretamente no arquivo,
     #    veja qual dos dois te parece mais direto)
     with open(dataset_path, encoding="utf-8") as f:
-        raw_data = ...
-    dataset: RagDataset = ...
+        raw_data = json.load(f)
+        dataset: RagDataset = RagDataset(**raw_data)
 
     # 3. Roda search() para cada pergunta, com barra de progresso
     minimal_results: list[MinimalSearchResults] = []
@@ -63,14 +63,13 @@ def search_dataset(dataset_path: str, k: int, save_directory: str,
         chunks = search(question.question, retriever, k)
 
         # 4. Converte cada chunk (dict) em um MinimalSource
-        sources = [
-            MinimalSource(
-                file_path=...,
-                first_character_index=...,
-                last_character_index=...,
-            )
-            for chunk in chunks
-        ]
+        sources = []
+        for chunk in chunks:
+            sources += [
+             MinimalSource(
+                          file_path=chunk['file_path'],
+                          first_character_index=chunk['first_character_index'],
+                          last_character_index=chunk['last_character_index'],)]
 
         minimal_results.append(
             MinimalSearchResults(
@@ -89,6 +88,6 @@ def search_dataset(dataset_path: str, k: int, save_directory: str,
     output_path = save_dir / Path(dataset_path).name
 
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(...)  # dica: pydantic tem um método pra serializar o model inteiro pra JSON
+        f.write(output.model_dump_json(indent=2))
 
     print(f"Saved student_search_results to {output_path}")

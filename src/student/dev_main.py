@@ -2,7 +2,7 @@ from pathlib import Path
 
 from src.student.ingestion import ingest_repo
 from src.student.index import build_index, load_index
-from src.student.retrivial import search
+from src.student.retrivial import search, search_dataset
 
 
 def main() -> None:
@@ -33,9 +33,15 @@ def main() -> None:
 
     retriever = load_index(Path("data/processed/bm25_index_code"))
     results = search("soma", retriever, k=2)
+    results_2 = search_dataset(Path("datasets_public/public/AnsweredQuestions/dataset_docs_public.json"), 2, "data_test/output_datasets", "code") # noqa
 
     for r in results:
         print(r["file_path"], "->", r["text"][:60])
+    print(100 * '-')
+
+    output_path = Path("data_test/output_datasets.json")
+    with open(output_path, encoding="utf-8") as f:
+        print(f.read())
 
 
 if __name__ == "__main__":

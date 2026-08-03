@@ -6,3 +6,4 @@ data/output/
 .venv/
 uv.lock
 .hf_cache
+data_test/output_datasets
