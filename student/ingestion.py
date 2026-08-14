@@ -127,7 +127,7 @@ def ingest_repo(repo_path: str, max_chunk_size: int) -> list[dict]:
         for doc in chunk_python_code(content, max_chunk_size):
             all_chunks.append({
                 "text": doc.page_content,
-                "file_path": str(py_file),
+                "file_path": py_file.as_posix(),
                 "first_character_index": doc.metadata["start_index"],
                 "last_character_index": (doc.metadata["start_index"]
                                          + len(doc.page_content)),
@@ -139,7 +139,7 @@ def ingest_repo(repo_path: str, max_chunk_size: int) -> list[dict]:
         for doc in chunk_text(content, max_chunk_size):
             all_chunks.append({
                 "text": doc.page_content,
-                "file_path": str(md_file),
+                "file_path": py_file.as_posix(),
                 "first_character_index": doc.metadata["start_index"],
                 "last_character_index": (doc.metadata["start_index"]
                                          + len(doc.page_content)),

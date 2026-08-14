@@ -3305,7 +3305,7 @@ wheels = [
 [[package]]
 name = "rag"
 version = "1.0.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "accelerate" },
     { name = "bm25s" },
