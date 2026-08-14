@@ -3,17 +3,12 @@ import json
 
 
 def _overlap_ratio(retrieved: MinimalSource, correct: MinimalSource) -> float:
-    """Calcula a fração do intervalo `correct` coberta por `retrieved`.
+    """Calcula a fração do intervalo `correct` coberta por `retrieved`."""
+    
+    r_path = retrieved.file_path.replace("data/raw/vllm-0.10.1/", "").replace("\\", "/")
+    c_path = correct.file_path.replace("data/raw/vllm-0.10.1/", "").replace("\\", "/")
 
-    Args:
-        retrieved: Fonte recuperada pelo sistema.
-        correct: Fonte do gabarito.
-
-    Returns:
-        Razão de sobreposição, de 0.0 a 1.0. Sempre 0.0 se os arquivos
-        forem diferentes.
-    """
-    if retrieved.file_path != correct.file_path:
+    if r_path != c_path:
         return 0.0
 
     overlap_start = max(retrieved.first_character_index, correct.first_character_index)

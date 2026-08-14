@@ -38,6 +38,7 @@ packages = ["src/student"]
 [dependency-groups]
 dev = [
     "bm25s>=0.3.10",
+    "fire>=0.7.1",
     "flake8>=7.3.0",
     "langchain-chroma>=1.1.0",
     "langchain-community>=0.4.2",

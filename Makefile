@@ -1,26 +1,59 @@
 VENV = .venv
 PYTHON = $(VENV)/bin/python
-PIP = $(VENV)/bin/pip
 
-# Define o cache do UV dinamicamente na pasta sgoinfre do projeto
 export UV_CACHE_DIR = $(CURDIR)/.cache/uv
+export HF_HOME = $(CURDIR)/.cache/huggingface
 
-.PHONY: all install clean run debug lint lint-strict fclean re
+.PHONY: all install run demo debug lint lint-strict clean fclean re
 
 all: install
 
 install:
-	# Deixa o UV gerenciar a criação da venv e a sincronização das dependências de forma limpa
 	uv venv $(VENV)
-	uv pip install --upgrade pip
 	uv sync
-	uv add --dev flake8 mypy langchain-chroma langchain-text-splitters langchain_community langchain_openai langchain_core bm25s fire
+
 
 run:
-	$(PYTHON) -m src $(ARGS)
+	uv run $(PYTHON) -m src $(if $(ARGS),$(ARGS),index --max_chunk_size 2000)
+
+
+demo:
+	uv run $(PYTHON) -m src search_dataset \
+		--dataset_path data/datasets/AnsweredQuestions/dataset_docs_public.json \
+		--k 10 \
+		--save_directory data/output/search_results/AnsweredQuestions \
+		--index_type docs
+	@if [ -x ./moulinette ]; then \
+		./moulinette evaluate_student_search_results \
+			data/output/search_results/AnsweredQuestions/dataset_docs_public.json \
+			data/datasets/AnsweredQuestions/dataset_docs_public.json \
+			--k 10 --max_context_length 2000; \
+	else \
+		echo "[demo] moulinette não encontrada localmente -- pulando avaliação (docs)."; \
+	fi
+	uv run $(PYTHON) -m src answer_dataset \
+		--student_search_results_path data/output/search_results/AnsweredQuestions/dataset_docs_public.json \
+		--save_directory data/output/search_results_and_answer/AnsweredQuestions
+
+	uv run $(PYTHON) -m src search_dataset \
+		--dataset_path data/datasets/AnsweredQuestions/dataset_code_public.json \
+		--k 10 \
+		--save_directory data/output/search_results/AnsweredQuestions \
+		--index_type code
+	@if [ -x ./moulinette ]; then \
+		./moulinette evaluate_student_search_results \
+			data/output/search_results/AnsweredQuestions/dataset_code_public.json \
+			data/datasets/AnsweredQuestions/dataset_code_public.json \
+			--k 10 --max_context_length 2000; \
+	else \
+		echo "[demo] moulinette não encontrada localmente -- pulando avaliação (code)."; \
+	fi
+	uv run $(PYTHON) -m src answer_dataset \
+		--student_search_results_path data/output/search_results/AnsweredQuestions/dataset_code_public.json \
+		--save_directory data/output/search_results_and_answer/AnsweredQuestions
 
 debug:
-	$(PYTHON) -m pdb -m src $(ARGS)
+	uv run $(PYTHON) -m pdb -m src $(ARGS)
 
 lint:
 	uv run flake8 --exclude $(VENV) .
@@ -35,6 +68,8 @@ clean:
 	rm -rf .mypy_cache .pytest_cache
 
 fclean: clean
-	rm -rf $(VENV) uv.lock .hf_cache .cache
+	rm -rf $(VENV) uv.lock .cache
+	rm -rf data/processed/*
+	rm -rf data/output/*
 
 re: fclean install

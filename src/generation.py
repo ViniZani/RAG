@@ -1,3 +1,4 @@
+from tqdm import tqdm
 from pathlib import Path
 import json
 
@@ -107,6 +108,7 @@ def answer(query: str, retriever, k: int = 10, max_context_tokens: int = 1500) -
     return tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
 
 
+
 def answer_dataset(student_search_results_path: Path, save_directory: str) -> None:
     """Gera respostas para resultados de busca já salvos por search_dataset.
 
@@ -119,21 +121,48 @@ def answer_dataset(student_search_results_path: Path, save_directory: str) -> No
     with open(student_search_results_path, encoding="utf-8") as f:
         data = StudentSearchResults(**json.load(f))
 
+    model, tokenizer = _get_model_and_tokenizer()
     minimal_answers = []
-    for result in data.search_results:
-        chunks = [
-            {
-                "file_path": s.file_path,
-                "first_character_index": s.first_character_index,
-                "last_character_index": s.last_character_index,
-                "text": "",  # texto original não está mais disponível aqui;
-                # se precisar do texto real para o prompt, considere
-                # salvar o "text" junto em MinimalSource, ou reabrir o
-                # arquivo original nesses índices.
-            }
-            for s in result.retrieved_sources
+
+    for result in tqdm(data.search_results, desc="Gerando respostas"):
+        chunks = []
+        for s in result.retrieved_sources:
+            chunk_text = ""
+            try:
+                path_obj = Path(s.file_path)
+                if path_obj.exists():
+                    file_content = path_obj.read_text(encoding="utf-8", errors="ignore")
+                    chunk_text = file_content[s.first_character_index:s.last_character_index]
+            except Exception:
+                chunk_text = ""
+
+            chunks.append(
+                {
+                    "file_path": s.file_path,
+                    "first_character_index": s.first_character_index,
+                    "last_character_index": s.last_character_index,
+                    "text": chunk_text,
+                }
+            )
+
+        fitted_chunks = fit_chunks_to_budget(chunks, max_tokens=64)
+        user_content = build_prompt(result.question, fitted_chunks)  
+
+        messages = [
+            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "user", "content": user_content},
         ]
-        generated_text = build_prompt(result.question, chunks)  # placeholder simplificado
+        prompt_text = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False,
+        )
+
+        inputs = tokenizer(prompt_text, return_tensors="pt")
+        output_ids = model.generate(**inputs, max_new_tokens=128)
+        generated_ids = output_ids[0][inputs["input_ids"].shape[1]:]
+        generated_text = tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
 
         minimal_answers.append(
             MinimalAnswer(

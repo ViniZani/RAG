@@ -16,7 +16,7 @@ class UnansweredQuestion(BaseModel):
 
 
 class AnsweredQuestion(UnansweredQuestion):
-    list_sources: List[MinimalSource]
+    sources: List[MinimalSource]
     answer: str
 
 
@@ -39,5 +39,6 @@ class StudentSearchResults(BaseModel):
     k: int
 
 
-class StudentSearchResultsAndAnswer(StudentSearchResults):
-    search_results: List[MinimalAnswer]  # type: ignore[assignment]
+class StudentSearchResultsAndAnswer(BaseModel):
+    search_results: List[MinimalAnswer]
+    k: int

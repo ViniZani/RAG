@@ -9,7 +9,8 @@ def chunk_python_code(text: str, max_chunk_size: int) -> list[Document]:
     if max_chunk_size <= 0:
         raise ValueError("max_chunk_size must be a positive integer")
     if max_chunk_size > 2000:
-        raise ValueError("max_chunk_size must be a lower than 2000")
+        raise ValueError("max_chunk_size must be a lower than or equal to 2000")
+    
     splitter = PythonCodeTextSplitter(
         chunk_size=max_chunk_size,
         chunk_overlap=0,
@@ -18,9 +19,13 @@ def chunk_python_code(text: str, max_chunk_size: int) -> list[Document]:
     raw_documents = splitter.create_documents([text])
     final_documents = []
     for doc in raw_documents:
+        content = doc.page_content
+        if len(content) > max_chunk_size:
+            content = content[:max_chunk_size]
+            
         final_documents.append(
             Document(
-                page_content=doc.page_content,
+                page_content=content,
                 metadata=dict(doc.metadata)
             )
         )
@@ -107,6 +112,8 @@ def chunk_text(text: str, max_chunk_size: int = 2000) -> list[Document]:
             for block in code_blocks:
                 if block["placeholder"] in content:
                     content = content.replace(block["placeholder"], block["original"])
+            if len(content) > max_chunk_size:
+                content = content[:max_chunk_size]
 
             new_metadata = dict(doc.metadata)
             new_metadata["start_index"] = real_start_index
