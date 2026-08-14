@@ -1,3 +1,3 @@
-{"text":"# Teste","file_path":"data_test/file1.md","first_character_index":0,"last_character_index":7,"chunk_type":"docs"}
-{"text":"## Isto e apenas um teste pra o chunking\nlorem ispsudum sei la o que\nsaudades do meu amorzinho\nana julinda\n```bash\nbash run.sh\n```","file_path":"data_test/file1.md","first_character_index":8,"last_character_index":138,"chunk_type":"docs"}
-{"text":"## mais um teste\n```bash\n# so um comentario\n```","file_path":"data_test/file1.md","first_character_index":139,"last_character_index":186,"chunk_type":"docs"}
+{"text":"# Teste","file_path":"data_test\\file1.md","first_character_index":0,"last_character_index":7,"chunk_type":"docs"}
+{"text":"## Isto e apenas um teste pra o chunking\nlorem ispsudum sei la o que\nsaudades do meu amorzinho\nana julinda\n```bash\nbash run.sh\n```","file_path":"data_test\\file1.md","first_character_index":8,"last_character_index":138,"chunk_type":"docs"}
+{"text":"## mais um teste\n```bash\n# so um comentario\n```","file_path":"data_test\\file1.md","first_character_index":139,"last_character_index":186,"chunk_type":"docs"}

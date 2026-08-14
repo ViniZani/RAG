@@ -16,6 +16,7 @@ dependencies = [
     "langchain-openai>=0.1.0",
     "langchain-text-splitters>=0.2.0",
     "bm25s>=0.3.10",
+    "fire>=0.7.1",
 ]
 
 [project.scripts]

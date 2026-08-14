@@ -2,7 +2,7 @@ from pathlib import Path
 
 from src.student.ingestion import ingest_repo
 from src.student.index import build_index, load_index
-from student.retrieval import search, search_dataset
+from src.student.retrivial import search, search_dataset
 
 
 def main() -> None:

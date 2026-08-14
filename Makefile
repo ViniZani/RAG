@@ -14,7 +14,7 @@ install:
 	uv venv $(VENV)
 	uv pip install --upgrade pip
 	uv sync
-	uv add --dev flake8 mypy langchain-chroma langchain-text-splitters langchain_community langchain_openai langchain_core bm25s
+	uv add --dev flake8 mypy langchain-chroma langchain-text-splitters langchain_community langchain_openai langchain_core bm25s fire
 
 run:
 	$(PYTHON) -m src $(ARGS)
