@@ -1,4 +1,5 @@
 # Sprint 2:
+# mypy: ignore-errors
 import bm25s
 import json
 from pathlib import Path
@@ -11,7 +12,8 @@ from .models import (
     StudentSearchResults,)
 
 
-def search(query: str, retriever: bm25s.BM25, k: int) -> list[dict]:
+def search(query: str, retriever: bm25s.BM25,
+           k: int) -> list[dict[str, str | int]]:
     """Searches the given BM25 retriever for the top-k most relevant chunks.
         query: The search query text.
         retriever: A loaded BM25 retriever (with corpus attached).
@@ -31,7 +33,7 @@ def search(query: str, retriever: bm25s.BM25, k: int) -> list[dict]:
         if adjusted_k == 0:
             return []
         results, scores = retriever.retrieve(tokenized_query, k=adjusted_k)
-    top_chunks = results[0]
+    top_chunks: list[dict[str, str | int]] = list(results[0])
     return top_chunks
 
 

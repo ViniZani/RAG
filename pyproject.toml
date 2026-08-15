@@ -9,7 +9,6 @@ dependencies = [
     "transformers>=4.40.0",
     "huggingface-hub>=0.20.0",
     "accelerate>=1.14.0",
-    # Adicionadas para o RAG e Chroma:
     "langchain-chroma>=0.1.0",
     "langchain-community>=0.2.0",
     "langchain-core>=0.2.0",
@@ -27,25 +26,25 @@ warn_unused_ignores = true
 ignore_missing_imports = false
 disallow_untyped_defs = true
 check_untyped_defs = true
+exclude = [
+    "\\.venv/",
+    "\\.cache/",
+    "data/",
+    "build/",
+]
 
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "W503"]
+[[tool.mypy.overrides]]
+module = ["bm25s.*", "fire.*"]
+ignore_missing_imports = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/student"]
 
 [dependency-groups]
 dev = [
-    "bm25s>=0.3.10",
-    "fire>=0.7.1",
     "flake8>=7.3.0",
-    "langchain-chroma>=1.1.0",
-    "langchain-community>=0.4.2",
-    "langchain-core>=1.5.3",
-    "langchain-openai>=1.4.1",
-    "langchain-text-splitters>=1.1.2",
     "mypy>=2.3.0",
+    "types-tqdm>=4.70.0.20260805",
 ]
 
 

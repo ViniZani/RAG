@@ -10,6 +10,7 @@ all: install
 install:
 	uv venv $(VENV)
 	uv sync
+	uv add --dev types-tqdm
 
 run:
 	uv run python -m src $(if $(ARGS),$(ARGS),index --max_chunk_size 2000)
@@ -54,12 +55,12 @@ debug:
 	uv run python -m pdb -m src $(ARGS)
 
 lint:
-	uv run flake8 --exclude $(VENV) .
-	uv run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	uv run flake8 --exclude $(VENV),data,.cache .
+	uv run mypy .  --exclude 'data' --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
-	uv run flake8 --exclude $(VENV) .
-	uv run mypy . --strict
+	uv run flake8 --exclude $(VENV),data,.cache .
+	uv run mypy . --exclude 'data' --strict
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

@@ -1,18 +1,23 @@
-from .models import AnsweredQuestion, MinimalSource, RagDataset, StudentSearchResults
+from .models import (AnsweredQuestion, MinimalSource,
+                     RagDataset, StudentSearchResults)
 import json
 
 
 def _overlap_ratio(retrieved: MinimalSource, correct: MinimalSource) -> float:
     """Calcula a fração do intervalo `correct` coberta por `retrieved`."""
-    
-    r_path = retrieved.file_path.replace("data/raw/vllm-0.10.1/", "").replace("\\", "/")
-    c_path = correct.file_path.replace("data/raw/vllm-0.10.1/", "").replace("\\", "/")
+
+    r_path = retrieved.file_path.replace(
+        "data/raw/vllm-0.10.1/", "").replace("\\", "/")
+    c_path = correct.file_path.replace(
+        "data/raw/vllm-0.10.1/", "").replace("\\", "/")
 
     if r_path != c_path:
         return 0.0
 
-    overlap_start = max(retrieved.first_character_index, correct.first_character_index)
-    overlap_end = min(retrieved.last_character_index, correct.last_character_index)
+    overlap_start = max(retrieved.first_character_index,
+                        correct.first_character_index)
+    overlap_end = min(retrieved.last_character_index,
+                      correct.last_character_index)
 
     if overlap_end <= overlap_start:
         return 0.0
@@ -49,13 +54,14 @@ def recall_at_k(
 
     found_count = 0
     for correct in correct_sources:
-        if any(is_source_found(retrieved, correct) for retrieved in retrieved_sources):
+        if any(is_source_found(retrieved, correct) for retrieved in retrieved_sources): # noqa
             found_count += 1
 
     return found_count / len(correct_sources)
 
 
-def evaluate(student_answer_path: str, dataset_path: str, k: int = 10) -> dict[int, float]:
+def evaluate(student_answer_path: str, dataset_path: str,
+             k: int = 10) -> dict[int, float]:
     """Compara os resultados de busca do aluno contra o gabarito.
 
     Args:

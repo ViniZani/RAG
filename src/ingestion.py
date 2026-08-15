@@ -1,17 +1,30 @@
 from pathlib import Path
-from langchain_text_splitters import (MarkdownTextSplitter,
-                                      PythonCodeTextSplitter)
+import re
+
+from langchain_text_splitters import (
+    MarkdownTextSplitter,
+    PythonCodeTextSplitter,
+)
 from langchain_core.documents import Document
 from tqdm import tqdm
-import re
 
 
 def chunk_python_code(text: str, max_chunk_size: int) -> list[Document]:
+    """Splits Python source code into chunks using syntax-aware separators.
+
+    Args:
+        text: The full source code of a .py file.
+        max_chunk_size: Maximum number of characters per chunk.
+
+    Returns:
+        List of Document chunks with start_index metadata.
+    """
     if max_chunk_size <= 0:
         raise ValueError("max_chunk_size must be a positive integer")
     if max_chunk_size > 2000:
-        raise ValueError("max_chunk_size must be a lower than or equal to 2000")
-    
+        raise ValueError(
+            "max_chunk_size must be a lower than or equal to 2000")
+
     splitter = PythonCodeTextSplitter(
         chunk_size=max_chunk_size,
         chunk_overlap=0,
@@ -23,7 +36,7 @@ def chunk_python_code(text: str, max_chunk_size: int) -> list[Document]:
         content = doc.page_content
         if len(content) > max_chunk_size:
             content = content[:max_chunk_size]
-            
+
         final_documents.append(
             Document(
                 page_content=content,
@@ -42,9 +55,9 @@ def chunk_text(text: str, max_chunk_size: int = 2000) -> list[Document]:
     if max_chunk_size > 2000:
         raise ValueError("max_chunk_size must be a lower than 2000")
     # 1. Proteger os blocos de código no texto inteiro com placeholders
-    code_blocks = []
+    code_blocks: list[dict[str, int | str]] = []
 
-    def replacer(match):
+    def replacer(match: re.Match[str]) -> str:
         idx = len(code_blocks)
         original_text = match.group(0)
         start = match.start()
@@ -62,10 +75,10 @@ def chunk_text(text: str, max_chunk_size: int = 2000) -> list[Document]:
 
     processed_text = re.sub(r"```.*?```", replacer, text, flags=re.DOTALL)
 
-    # 2. Encontrar os índices de divisão por seção (headers #) no texto processado
-    # Como os blocos viraram placeholders, não precisamos mais nos preocupar com '#' dentro de código!
+    # 2. Encontrar os índices de divisão por (headers #) no texto processado
     header_pattern = re.compile(r"^(#{1,6})\s+", re.MULTILINE)
-    split_indices = [m.start() for m in header_pattern.finditer(processed_text)]
+    split_indices = [m.start()
+                     for m in header_pattern.finditer(processed_text)]
 
     # Garantir que o início e o fim do texto entrem nos limites das seções
     if not split_indices or split_indices[0] != 0:
@@ -97,42 +110,51 @@ def chunk_text(text: str, max_chunk_size: int = 2000) -> list[Document]:
             # O start_index retornado pelo splitter é relativo à *seção*
             splitter_start_index_in_sec = doc.metadata.get("start_index", 0)
 
-# Posição absoluta do início do chunk no texto processado (com placeholders)
+            # Posição absoluta do início do chunk no texto processado
+            # (com placeholders)
             absol_splitter_index = section_start + splitter_start_index_in_sec
 
-# 4. Calcular o delta acumulado considerando os blocos anteriores a esta posição absoluta
+            # 4. Calcular o delta acumulado considerando os blocos
+            # anteriores a esta posição absoluta
             delta_acumulado = 0
             for block in code_blocks:
                 if block["start"] < (absol_splitter_index + delta_acumulado):
-                    delta_acumulado += block["len_diff"]
+                    delta_acumulado += block["len_diff"]  # type: ignore[operator] # noqa
 
             # O start_index real no texto original completo
             real_start_index = absol_splitter_index + delta_acumulado
 
-# 5. Restaurar os placeholders de volta para os blocos de código originais
+            # 5. Restaurar os placeholders de volta para os blocos de
+            # código originais
             for block in code_blocks:
-                if block["placeholder"] in content:
-                    content = content.replace(block["placeholder"], block["original"])
+                placeholder = block["placeholder"]
+                assert isinstance(placeholder, str)
+                if placeholder in content:
+                    original = block["original"]
+                    assert isinstance(original, str)
+                    content = content.replace(placeholder, original)
             if len(content) > max_chunk_size:
                 content = content[:max_chunk_size]
 
             new_metadata = dict(doc.metadata)
             new_metadata["start_index"] = real_start_index
 
-            final_documents.append(Document(page_content=content, metadata=new_metadata))
+            final_documents.append(
+                Document(page_content=content, metadata=new_metadata))
 
     return final_documents
 
 
-def ingest_repo(repo_path: str, max_chunk_size: int) -> list[dict]:
+def ingest_repo(repo_path: str,
+                max_chunk_size: int) -> list[dict[str, str | int]]:
     """Scrapes the llm's repo, and search by .py and .md files
     parser each type of file and returns in a organized data"""
-    all_chunks: list[dict] = []
+    all_chunks: list[dict[str, str | int]] = []
 
-    repo_path = Path(repo_path)
+    repo_path_obj = Path(repo_path)
 
-    py_files = list(repo_path.rglob("*.py"))
-    md_files = list(repo_path.rglob("*.md"))
+    py_files = list(repo_path_obj.rglob("*.py"))
+    md_files = list(repo_path_obj.rglob("*.md"))
 
     for py_file in tqdm(py_files, desc="Indexando código"):
         content = py_file.read_text(encoding="utf-8")
@@ -161,4 +183,4 @@ def ingest_repo(repo_path: str, max_chunk_size: int) -> list[dict]:
 
 
 if __name__ == "__main__":
-    print(ingest_repo(Path("data_test"), 200))
+    print(ingest_repo("data_test", 200))
