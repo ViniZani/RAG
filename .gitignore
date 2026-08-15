@@ -3,6 +3,8 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
 data/output/
+data/processed/*
+data/output/*
 .venv/
 uv.lock
 .hf_cache
