@@ -2,6 +2,7 @@ from pathlib import Path
 from langchain_text_splitters import (MarkdownTextSplitter,
                                       PythonCodeTextSplitter)
 from langchain_core.documents import Document
+from tqdm import tqdm
 import re
 
 
@@ -124,12 +125,16 @@ def chunk_text(text: str, max_chunk_size: int = 2000) -> list[Document]:
 
 
 def ingest_repo(repo_path: str, max_chunk_size: int) -> list[dict]:
-    """Screapes the llm's repo, and search by .py and .md files
+    """Scrapes the llm's repo, and search by .py and .md files
     parser each type of file and returns in a organized data"""
     all_chunks: list[dict] = []
 
     repo_path = Path(repo_path)
-    for py_file in repo_path.rglob("*.py"):
+
+    py_files = list(repo_path.rglob("*.py"))
+    md_files = list(repo_path.rglob("*.md"))
+
+    for py_file in tqdm(py_files, desc="Indexando código"):
         content = py_file.read_text(encoding="utf-8")
         for doc in chunk_python_code(content, max_chunk_size):
             all_chunks.append({
@@ -141,7 +146,7 @@ def ingest_repo(repo_path: str, max_chunk_size: int) -> list[dict]:
                 "chunk_type": "code",
             })
 
-    for md_file in repo_path.rglob("*.md"):
+    for md_file in tqdm(md_files, desc="Indexando docs"):
         content = md_file.read_text(encoding="utf-8")
         for doc in chunk_text(content, max_chunk_size):
             all_chunks.append({

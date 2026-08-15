@@ -1,5 +1,4 @@
 VENV = .venv
-PYTHON = $(VENV)/bin/python
 
 export UV_CACHE_DIR = $(CURDIR)/.cache/uv
 export HF_HOME = $(CURDIR)/.cache/huggingface
@@ -12,13 +11,12 @@ install:
 	uv venv $(VENV)
 	uv sync
 
-
 run:
-	uv run $(PYTHON) -m src $(if $(ARGS),$(ARGS),index --max_chunk_size 2000)
+	uv run python -m src $(if $(ARGS),$(ARGS),index --max_chunk_size 2000)
 
 
 demo:
-	uv run $(PYTHON) -m src search_dataset \
+	uv run python -m src search_dataset \
 		--dataset_path data/datasets/AnsweredQuestions/dataset_docs_public.json \
 		--k 10 \
 		--save_directory data/output/search_results/AnsweredQuestions \
@@ -31,11 +29,11 @@ demo:
 	else \
 		echo "[demo] moulinette não encontrada localmente -- pulando avaliação (docs)."; \
 	fi
-	uv run $(PYTHON) -m src answer_dataset \
+	uv run python -m src answer_dataset \
 		--student_search_results_path data/output/search_results/AnsweredQuestions/dataset_docs_public.json \
 		--save_directory data/output/search_results_and_answer/AnsweredQuestions
 
-	uv run $(PYTHON) -m src search_dataset \
+	uv run python -m src search_dataset \
 		--dataset_path data/datasets/AnsweredQuestions/dataset_code_public.json \
 		--k 10 \
 		--save_directory data/output/search_results/AnsweredQuestions \
@@ -48,12 +46,12 @@ demo:
 	else \
 		echo "[demo] moulinette não encontrada localmente -- pulando avaliação (code)."; \
 	fi
-	uv run $(PYTHON) -m src answer_dataset \
+	uv run python -m src answer_dataset \
 		--student_search_results_path data/output/search_results/AnsweredQuestions/dataset_code_public.json \
 		--save_directory data/output/search_results_and_answer/AnsweredQuestions
 
 debug:
-	uv run $(PYTHON) -m pdb -m src $(ARGS)
+	uv run python -m pdb -m src $(ARGS)
 
 lint:
 	uv run flake8 --exclude $(VENV) .
